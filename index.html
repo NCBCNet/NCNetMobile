@@ -2,65 +2,181 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>NCNetMobile图形化配置工具</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>NCNetMobile - 手机端配置工具</title>
+  <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/vant/4.8.1/index.css" crossorigin="anonymous">
+  <script src="https://cdn.bootcdn.net/ajax/libs/vue/3.4.21/vue.global.prod.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.bootcdn.net/ajax/libs/vant/4.8.1/index.umd.js" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/codemirror/5.65.16/codemirror.min.css" crossorigin="anonymous">
+  <script src="https://cdn.bootcdn.net/ajax/libs/codemirror/5.65.16/codemirror.min.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.bootcdn.net/ajax/libs/codemirror/5.65.16/mode/xml/xml.min.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.bootcdn.net/ajax/libs/codemirror/5.65.16/mode/clike/clike.min.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.bootcdn.net/ajax/libs/clipboard.js/2.0.11/clipboard.min.js" crossorigin="anonymous"></script>
   
-  <!-- 引入UI组件库样式 -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/vant@4/lib/index.css">
-  <!-- Vue3核心库（页面交互基础） -->
-  <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
-  <!-- Vant UI组件（按钮/输入框等） -->
-  <script src="https://cdn.jsdelivr.net/npm/vant@4/lib/index.umd.js"></script>
-  <!-- 代码编辑器样式+核心 -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5/lib/codemirror.css">
-  <script src="https://cdn.jsdelivr.net/npm/codemirror@5/lib/codemirror.js"></script>
-  <!-- 代码高亮：XML(布局)/Java/Kotlin -->
-  <script src="https://cdn.jsdelivr.net/npm/codemirror@5/mode/xml/xml.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/codemirror@5/mode/clike/clike.js"></script>
-  <!-- 剪贴板插件（一键复制代码） -->
-  <script src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js"></script>
-
   <style>
-    /* 全局样式重置 */
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    /* 页面基础布局：居中+适配手机 */
-    body { padding: 16px; background-color: #f5f5f5; max-width: 600px; margin: 0 auto; }
-    /* 配置/预览/代码区通用样式 */
-    .config-box, .preview-box, .code-box { background: #fff; border-radius: 8px; padding: 16px; margin-bottom: 20px; }
-    h3 { margin-bottom: 16px; font-size: 18px; color: #333; }
+    * { margin: 0; padding: 0; box-sizing: border-box; transition: all 0.2s ease; }
+    body { 
+      padding: 16px; 
+      background-color: #f5f5f5; 
+      max-width: 600px; 
+      margin: 0 auto; 
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      padding-bottom: constant(safe-area-inset-bottom);
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    .config-box, .preview-box, .code-box { 
+      background: #fff; 
+      border-radius: 12px; 
+      padding: 16px; 
+      margin-bottom: 16px; 
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08); 
+    }
+
+    h3 { 
+      margin-bottom: 16px; 
+      font-size: 18px; 
+      color: #333; 
+      font-weight: 600; 
+    }
+
     .van-cell { margin-bottom: 8px; }
-    /* 预览区样式 */
-    .preview-demo { padding: 20px; text-align: center; border: 1px solid #eee; border-radius: 4px; margin-top: 10px; }
-    .preview-demo button { padding: 8px 24px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
-    /* 代码编辑器高度（避免显示不全） */
-    #code-editor { height: 400px; border-radius: 4px; border: 1px solid #eee; }
-    /* 按钮组布局 */
-    .btn-group { margin-top: 16px; display: flex; gap: 8px; flex-wrap: wrap; }
-    .van-button { flex: 1; min-width: 120px; }
-    .code-type { margin-bottom: 10px; display: flex; gap: 8px; }
+    .van-field__control { font-size: 14px !important; }
+
+    .preview-demo { 
+      padding: 24px; 
+      text-align: center; 
+      border: 1px solid #f0f0f0; 
+      border-radius: 8px; 
+      margin-top: 12px; 
+      background: #fafafa;
+    }
+    .preview-demo h4 { 
+      margin-bottom: 24px; 
+      font-size: 18px; 
+      color: #222; 
+      font-weight: 600; 
+    }
+    .preview-demo button { 
+      padding: 12px 32px; 
+      border: none; 
+      border-radius: 24px; 
+      cursor: pointer; 
+      font-size: 16px; 
+      font-weight: 500; 
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+    .preview-demo button:active { transform: scale(0.98); }
+
+    #code-editor { 
+      height: 350px; 
+      border-radius: 8px; 
+      border: 1px solid #f0f0f0 !important; 
+      font-size: 13px !important; 
+    }
+
+    .btn-group { 
+      margin-top: 16px; 
+      display: flex; 
+      gap: 12px; 
+      flex-wrap: wrap; 
+    }
+    .van-button { 
+      flex: 1; 
+      min-width: 120px; 
+      border-radius: 8px !important; 
+      font-size: 14px !important; 
+      padding: 10px 0 !important; 
+    }
+
+    .code-type { 
+      margin-bottom: 12px; 
+      display: flex; 
+      gap: 16px; 
+      align-items: center; 
+    }
+    .van-radio { font-size: 14px !important; }
+
+    .error-tip { 
+      color: #ff4d4f; 
+      font-size: 12px; 
+      margin-top: 4px; 
+      text-align: right; 
+    }
+
+    .loading { 
+      position: fixed; 
+      top: 0; 
+      left: 0; 
+      width: 100%; 
+      height: 100%; 
+      background: rgba(255,255,255,0.8); 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      z-index: 9999; 
+      font-size: 14px; 
+      color: #333;
+    }
+
+    @media (max-width: 375px) {
+      body { padding: 12px 8px; }
+      .config-box, .preview-box, .code-box { padding: 12px; margin-bottom: 12px; }
+      .preview-demo { padding: 20px 16px; }
+      .preview-demo button { padding: 10px 24px; font-size: 15px; }
+      #code-editor { height: 300px; }
+      .van-button { min-width: 100px; }
+    }
+
+    @media (min-width: 428px) {
+      .config-box, .preview-box, .code-box { padding: 20px; }
+      #code-editor { height: 400px; }
+    }
   </style>
 </head>
 <body>
-  <!-- Vue挂载根容器 -->
-  <div id="app">
-    <!-- 配置区：输入页面标题/按钮文字/颜色 -->
+  <div class="loading" id="loading">加载中... 请稍候</div>
+
+  <div id="app" style="display: none;">
     <div class="config-box">
-      <h3>NCNetMobile图形化配置</h3>
+      <h3>配置BaseView界面</h3>
       <van-cell-group>
-        <!-- 双向绑定配置项：输入值同步到config对象 -->
-        <van-field v-model="config.pageTitle" label="页面标题" placeholder="如：我的NCNet应用" clearable />
-        <van-field v-model="config.btnText" label="按钮文字" placeholder="如：提交数据" clearable />
-        <van-field v-model="config.btnBgColor" label="按钮背景色" placeholder="16进制如：#1677ff" clearable />
-        <van-field v-model="config.btnTextColor" label="按钮文字色" placeholder="16进制如：#ffffff" clearable />
+        <van-field 
+          v-model="config.pageTitle" 
+          label="页面标题" 
+          placeholder="如：我的NCNet应用" 
+          clearable 
+        />
+        <van-field 
+          v-model="config.btnText" 
+          label="按钮文字" 
+          placeholder="如：提交数据" 
+          clearable 
+        />
+        <van-field 
+          v-model="config.btnBgColor" 
+          label="按钮背景色" 
+          placeholder="16进制如：#1677ff" 
+          clearable 
+          @input="checkColor('bg')"
+        />
+        <div v-if="bgColorError" class="error-tip">❌ 请输入合法的16进制颜色（如#1677ff或#fff）</div>
+        
+        <van-field 
+          v-model="config.btnTextColor" 
+          label="按钮文字色" 
+          placeholder="16进制如：#ffffff" 
+          clearable 
+          @input="checkColor('text')"
+        />
+        <div v-if="textColorError" class="error-tip">❌ 请输入合法的16进制颜色（如#ffffff或#fff）</div>
       </van-cell-group>
     </div>
 
-    <!-- 预览区：实时展示配置效果 -->
     <div class="preview-box">
       <h3>实时预览（手机端效果）</h3>
       <div class="preview-demo">
-        <!-- 标题/按钮显示：无输入时用默认值 -->
-        <h4 style="margin-bottom: 20px; font-size: 18px;">{{config.pageTitle || '我的NCNet应用'}}</h4>
+        <h4>{{config.pageTitle || '我的NCNet应用'}}</h4>
         <button :style="{
           background: isValidColor(config.btnBgColor) ? config.btnBgColor : '#1677ff',
           color: isValidColor(config.btnTextColor) ? config.btnTextColor : '#ffffff'
@@ -70,103 +186,111 @@
       </div>
     </div>
 
-    <!-- 代码生成区：生成可直接导入安卓项目的代码 -->
     <div class="code-box">
-      <h3>生成代码（直接导入NCNetMobile）</h3>
-      <!-- 代码类型切换：Java/Kotlin -->
+      <h3>生成BaseView代码（直接导入Android Studio）</h3>
       <div class="code-type">
         <van-radio-group v-model="codeType">
           <van-radio name="java">Java代码</van-radio>
-          <van-radio name="kotlin">Kotlin代码</van-radio>
+          <van-radio name="kotlin">Kotlin代码（推荐）</van-radio>
         </van-radio-group>
       </div>
-      <!-- 隐藏的文本域：存放生成的代码（用于复制） -->
-      <textarea id="code-content" v-model="codeContent" style="display: none;"></textarea>
-      <!-- 代码编辑器：可视化展示代码 -->
+      <textarea id="code-content" v-model="codeContent" style="display: none; white-space: pre-wrap;"></textarea>
       <div id="code-editor"></div>
       <div class="btn-group">
         <van-button type="primary" @click="generateCode">一键生成代码</van-button>
         <van-button type="success" data-clipboard-target="#code-content" id="copy-btn">一键复制代码</van-button>
       </div>
+      <div style="margin-top: 8px; font-size: 12px; color: #666;">
+        ⚠️ 代码包名已自动填充：<span style="color: #1677ff; font-weight: 500;">{{packageName}}</span>（与你的Android项目一致）
+      </div>
     </div>
   </div>
 
   <script>
-    // 解构Vant组件（简化注册）
-    const { Field, CellGroup, Button, Toast, RadioGroup, Radio } = vant;
-    // 创建Vue实例
-    const { createApp } = Vue;
-    const app = createApp({
-      // 数据区：存放页面交互所需变量
-      data() {
-        return {
-          // 配置项：存储用户输入的标题/按钮/颜色
-          config: { pageTitle: "", btnText: "", btnBgColor: "", btnTextColor: "" },
-          // 生成的代码内容
-          codeContent: "",
-          // 代码编辑器实例
-          codeEditor: null,
-          // 默认生成Kotlin代码（安卓主流）
-          codeType: "kotlin"
-        };
-      },
-      // 页面加载完成后执行
-      mounted() {
-        // 初始化代码编辑器：强制同步默认codeType（优化体验）
-        const initMode = this.codeType === "java" ? "text/x-java" : "text/x-kotlin";
-        this.codeEditor = CodeMirror(document.getElementById("code-editor"), {
-          lineNumbers: true, // 显示行号
-          mode: initMode, // 修复初始模式匹配问题
-          theme: "default",
-          readOnly: false,
-          height: "400px"
-        });
-        
-        // 初始化剪贴板：复制成功提示
-        new ClipboardJS('#copy-btn').on('success', () => {
-          Toast.success('代码复制成功！');
-        });
-        
-        // 页面加载后生成默认代码
-        this.generateCode();
-        
-        // 监听代码类型切换：切换后重新生成对应代码
-        this.$watch('codeType', () => {
-          this.codeEditor.setOption("mode", this.codeType === "java" ? "text/x-java" : "text/x-kotlin");
+    window.onload = function() {
+      const { Field, CellGroup, Button, Toast, RadioGroup, Radio } = vant;
+      const { createApp } = Vue;
+
+      const app = createApp({
+        data() {
+          return {
+            config: { 
+              pageTitle: "我的NCNet应用", 
+              btnText: "提交数据", 
+              btnBgColor: "#1677ff", 
+              btnTextColor: "#ffffff" 
+            },
+            codeContent: "",
+            codeEditor: null,
+            codeType: "kotlin",
+            packageName: "com.ncnetmobile",
+            bgColorError: false,
+            textColorError: false
+          };
+        },
+        mounted() {
+          document.getElementById("loading").style.display = "none";
+          document.getElementById("app").style.display = "block";
+
+          const initMode = this.codeType === "java" ? "text/x-java" : "text/x-kotlin";
+          this.codeEditor = CodeMirror(document.getElementById("code-editor"), {
+            lineNumbers: true,
+            mode: initMode,
+            theme: "default",
+            readOnly: false,
+            height: "350px",
+            tabSize: 4,
+            indentUnit: 4,
+            lineWrapping: true
+          });
+
+          new ClipboardJS('#copy-btn').on('success', () => {
+            Toast.success('✅ 代码复制成功！可直接导入Android Studio', { duration: 2000 });
+          }).on('error', () => {
+            Toast.fail('❌ 复制失败，请手动复制', { duration: 2000 });
+          });
+
           this.generateCode();
-        });
-      },
-      // 方法区：存放页面功能逻辑
-      methods: {
-        // 校验16进制颜色合法性（支持3位/6位，防止输入无效值）
-        isValidColor(hex) {
-          if (!hex) return false;
-          const reg = /^#([0-9A-Fa-f]{6}|[0-9A-Fa-f]{3})$/;
-          return reg.test(hex);
+
+          this.$watch('codeType', () => {
+            this.codeEditor.setOption("mode", this.codeType === "java" ? "text/x-java" : "text/x-kotlin");
+            this.generateCode();
+            Toast.info(`已切换到${this.codeType === "java" ? "Java" : "Kotlin"}代码`, { duration: 1500 });
+          });
         },
-        
-        // 16进制颜色转安卓int值（适配安卓代码）
-        hexToAndroidColor(hex) {
-          if (!this.isValidColor(hex)) hex = "#1677ff"; // 无效值回退默认色
-          let color = hex.replace('#', '');
-          if (color.length === 3) color = color.split('').map(c => c + c).join('');
-          if (color.length === 6) color = 'FF' + color;
-          return `0x${color.toUpperCase()}`;
-        },
-        
-        // 核心方法：生成安卓代码
-        generateCode() {
-          // 获取配置值（无输入时用默认值）
-          const pageTitle = this.config.pageTitle || "我的NCNetMobile应用";
-          const btnText = this.config.btnText || "提交数据";
-          const btnBgColor = this.isValidColor(this.config.btnBgColor) ? this.config.btnBgColor : "#1677ff";
-          const btnTextColor = this.isValidColor(this.config.btnTextColor) ? this.config.btnTextColor : "#ffffff";
-          
-          // 安卓项目包名（⚠️ 需替换为自己的NCNetMobile项目包名）
-          const PACKAGE_NAME = "com.ncnetmobile";
-          
-          // 生成XML布局代码（安卓页面布局）
-          const xmlCode = `<?xml version="1.0" encoding="utf-8"?>
+        methods: {
+          isValidColor(hex) {
+            if (!hex) return false;
+            const reg = /^#?([0-9A-Fa-f]{6}|[0-9A-Fa-f]{3})$/;
+            return reg.test(hex);
+          },
+
+          checkColor(type) {
+            const value = type === 'bg' ? this.config.btnBgColor : this.config.btnTextColor;
+            const isError = !this.isValidColor(value);
+            this[type + 'ColorError'] = isError;
+            if (isError) {
+              if (type === 'bg') this.config.btnBgColor = "#1677ff";
+              if (type === 'text') this.config.btnTextColor = "#ffffff";
+              Toast.warning('颜色格式错误，已自动恢复默认色', { duration: 1500 });
+            }
+          },
+
+          hexToAndroidColor(hex) {
+            if (!this.isValidColor(hex)) hex = "#1677ff";
+            if (!hex.startsWith('#')) hex = '#' + hex;
+            let color = hex.replace('#', '');
+            if (color.length === 3) color = color.split('').map(c => c + c).join('');
+            if (color.length === 6) color = 'FF' + color;
+            return `0x${color.toUpperCase()}`;
+          },
+
+          generateCode() {
+            const { pageTitle, btnText, btnBgColor, btnTextColor } = this.config;
+            const validBgColor = this.isValidColor(btnBgColor) ? btnBgColor : "#1677ff";
+            const validTextColor = this.isValidColor(btnTextColor) ? btnTextColor : "#ffffff";
+
+            const xmlCode = `<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -181,21 +305,22 @@
         android:text="${pageTitle}"
         android:textSize="18sp"
         android:textStyle="bold"
-        android:marginBottom="30dp"/>
+        android:marginBottom="30dp"
+        android:textColor="#222222"/>
 
     <Button
         android:id="@+id/btn_submit"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="${btnText}"
-        android:backgroundTint="${btnBgColor}"
-        android:textColor="${btnTextColor}"
-        android:padding="10dp 30dp"/>
+        android:backgroundTint="${validBgColor}"
+        android:textColor="${validTextColor}"
+        android:padding="12dp 32dp"
+        android:textSize="16sp"/>
 
 </LinearLayout>`;
 
-          // 生成Java代码（安卓逻辑）
-          const javaCode = `package ${PACKAGE_NAME};
+            const javaCode = `package ${this.packageName};
 
 import android.os.Bundle;
 import android.view.View;
@@ -204,67 +329,75 @@ import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
-public class MainActivity extends AppCompatActivity {
-
+public class BaseView extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-        
-        // 绑定控件
+        setContentView(R.layout.activity_baseview);
+
         TextView tvTitle = findViewById(R.id.tv_title);
         Button btnSubmit = findViewById(R.id.btn_submit);
-        
-        // 按钮点击事件
+
         btnSubmit.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Toast.makeText(MainActivity.this, "${btnText}点击成功！", Toast.LENGTH_SHORT).show();
+                Toast.makeText(BaseView.this, "${btnText}点击成功！BaseView已生效", Toast.LENGTH_SHORT).show();
             }
         });
     }
 }`;
 
-          // 生成Kotlin代码（安卓主流）
-          const kotlinCode = `package ${PACKAGE_NAME}
+            const kotlinCode = `package ${this.packageName}
 
 import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import kotlinx.android.synthetic.main.activity_main.btn_submit
-import kotlinx.android.synthetic.main.activity_main.tv_title
+import kotlinx.android.synthetic.main.activity_baseview.btn_submit
+import kotlinx.android.synthetic.main.activity_baseview.tv_title
 
-class MainActivity : AppCompatActivity() {
+class BaseView : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
-        
-        // 按钮点击事件
+        setContentView(R.layout.activity_baseview)
+
         btn_submit.setOnClickListener {
-            Toast.makeText(this, "${btnText}点击成功！", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "${btnText}点击成功！BaseView已生效", Toast.LENGTH_SHORT).show()
         }
     }
 }`;
 
-          // 组合最终代码：XML+Java/Kotlin
-          const finalCode = `=== XML布局文件 (res/layout/activity_main.xml) ===
+            const finalCode = `=============================================================
+📌 XML布局文件（路径：res/layout/activity_baseview.xml）
+=============================================================
 ${xmlCode}
 
-=== ${this.codeType === "java" ? "Java" : "Kotlin"} 代码文件 (${PACKAGE_NAME.replace('.', '/')}/MainActivity.${this.codeType}) ===
-${this.codeType === "java" ? javaCode : kotlinCode}`;
+=============================================================
+📌 ${this.codeType === "java" ? "Java" : "Kotlin"}代码文件（路径：${this.packageName.replace('.', '/')}/BaseView.${this.codeType}）
+=============================================================
+${this.codeType === "java" ? javaCode : kotlinCode}
 
-          // 更新代码到文本域和编辑器
-          this.codeContent = finalCode;
-          this.codeEditor.setValue(finalCode);
+=============================================================
+💡 使用说明：
+1. 复制XML代码 → 替换Android项目中 res/layout/activity_baseview.xml
+2. 复制${this.codeType === "java" ? "Java" : "Kotlin"}代码 → 替换项目中同名文件
+3. 同步Gradle → 运行APP即可看到效果
+=============================================================`;
+
+            this.codeContent = finalCode;
+            this.codeEditor.setValue(finalCode);
+          }
         }
-      }
-    });
+      });
 
-    // 注册Vant组件
-    app.use(Field).use(CellGroup).use(Button).use(Toast).use(RadioGroup).use(Radio);
-    // 挂载Vue实例到页面
-    app.mount('#app');
+      app.use(Field).use(CellGroup).use(Button).use(Toast).use(RadioGroup).use(Radio);
+      app.mount('#app');
+    };
+
+    window.addEventListener('error', function(e) {
+      if (e.target.tagName === 'SCRIPT' || e.target.tagName === 'LINK') {
+        document.getElementById("loading").innerText = "⚠️ 资源加载失败，请检查网络后刷新页面";
+      }
+    }, true);
   </script>
 </body>
 </html>
-
